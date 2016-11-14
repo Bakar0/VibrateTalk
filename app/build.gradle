@@ -34,3 +34,4 @@ repositories {
 dependencies {
     compile 'com.sendbird.sdk:sendbird-android-sdk:3.0.7'
 }
+apply plugin: 'com.google.gms.google-services'

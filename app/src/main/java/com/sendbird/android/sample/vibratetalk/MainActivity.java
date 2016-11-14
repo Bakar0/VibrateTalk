@@ -1,6 +1,8 @@
 package com.sendbird.android.sample.vibratetalk;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -9,7 +11,12 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.sendbird.android.SendBird;
+import com.sendbird.android.SendBirdException;
+import com.sendbird.android.User;
 
 
 public class MainActivity extends FragmentActivity {
@@ -71,22 +78,93 @@ public class MainActivity extends FragmentActivity {
             @Override
             public void onClick(View view) {
                 Button btn = (Button) view;
-                if (btn.getText().equals("Connect")) {
+                if (btn.getText().equals("Log In")) {
                     connect();
                 } else {
                     disconnect();
                 }
-
                 Helper.hideKeyboard(MainActivity.this);
             }
         });
     }
     //connect to server
     private void connect() {
+        SendBird.connect(sUserId, new SendBird.ConnectHandler() {
+            @Override
+            public void onConnected(User user, SendBirdException e) {
+                if (e != null) {
+                    Toast.makeText(MainActivity.this, "" + e.getCode() + ":" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    setState(State.DISCONNECTED);
+                    return;
+                }
 
+                String nickname = mNickname;
+
+                SendBird.updateCurrentUserInfo(nickname, null, new SendBird.UserInfoUpdateHandler() {
+                    @Override
+                    public void onUpdated(SendBirdException e) {
+                        if (e != null) {
+                            Toast.makeText(MainActivity.this, "" + e.getCode() + ":" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            setState(State.DISCONNECTED);
+                            return;
+                        }
+
+                        SharedPreferences.Editor editor = getPreferences(Context.MODE_PRIVATE).edit();
+                        editor.putString("user_id", sUserId);
+                        editor.putString("nickname", mNickname);
+                        editor.commit();
+
+                        setState(State.CONNECTED);
+
+                        Intent intent = new Intent(MainActivity.this, SendBirdGroupChannelListActivity.class);
+                        startActivity(intent);
+                    }
+                });
+
+                if (FirebaseInstanceId.getInstance().getToken() == null) return;
+
+                SendBird.registerPushTokenForCurrentUser(FirebaseInstanceId.getInstance().getToken(), new SendBird.RegisterPushTokenWithStatusHandler() {
+                    @Override
+                    public void onRegistered(SendBird.PushTokenRegistrationStatus pushTokenRegistrationStatus, SendBirdException e) {
+                        if (e != null) {
+                            Toast.makeText(MainActivity.this, "" + e.getCode() + ":" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
+                });
+            }
+        });
+
+        setState(State.CONNECTING);
     }
 
     private void disconnect() {
+        SendBird.disconnect(new SendBird.DisconnectHandler() {
+            @Override
+            public void onDisconnected() {
+                setState(State.DISCONNECTED);
+            }
+        });
+    }
 
+    private void setState(State state) {
+        switch (state) {
+            case DISCONNECTED:
+                ((Button) findViewById(R.id.btn_connect)).setText("Log In");
+                findViewById(R.id.btn_connect).setEnabled(true);
+
+                break;
+
+            case CONNECTING:
+                ((Button) findViewById(R.id.btn_connect)).setText("Connecting...");
+                findViewById(R.id.btn_connect).setEnabled(false);
+
+                break;
+
+            case CONNECTED:
+                ((Button) findViewById(R.id.btn_connect)).setText("Log Out");
+                findViewById(R.id.btn_connect).setEnabled(true);
+                break;
+        }
     }
 }
