@@ -20,6 +20,7 @@ import com.sendbird.android.User;
 
 
 public class MainActivity extends FragmentActivity {
+    public static String VERSION = "3.0.7.0";
 
     private enum State {DISCONNECTED, CONNECTING, CONNECTED}
     /**
@@ -78,7 +79,7 @@ public class MainActivity extends FragmentActivity {
             @Override
             public void onClick(View view) {
                 Button btn = (Button) view;
-                if (btn.getText().equals("Log In")) {
+                if (btn.getText().equals("Log in")) {
                     connect();
                 } else {
                     disconnect();
@@ -86,6 +87,32 @@ public class MainActivity extends FragmentActivity {
                 Helper.hideKeyboard(MainActivity.this);
             }
         });
+        setState(State.DISCONNECTED);
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        SendBird.disconnect(null);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        /**
+         * If the minimum SDK version you support is under Android 4.0,
+         * you MUST uncomment the below code to receive push notifications.
+         */
+//        SendBird.notifyActivityResumedForOldAndroids();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        /**
+         * If the minimum SDK version you support is under Android 4.0,
+         * you MUST uncomment the below code to receive push notifications.
+         */
+//        SendBird.notifyActivityPausedForOldAndroids();
     }
     //connect to server
     private void connect() {
@@ -150,7 +177,7 @@ public class MainActivity extends FragmentActivity {
     private void setState(State state) {
         switch (state) {
             case DISCONNECTED:
-                ((Button) findViewById(R.id.btn_connect)).setText("Log In");
+                ((Button) findViewById(R.id.btn_connect)).setText("Log in");
                 findViewById(R.id.btn_connect).setEnabled(true);
 
                 break;
