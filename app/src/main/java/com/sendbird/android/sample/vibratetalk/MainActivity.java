@@ -78,7 +78,7 @@ public class MainActivity extends FragmentActivity {
             @Override
             public void onClick(View view) {
                 Button btn = (Button) view;
-                if (btn.getText().equals("Connect")) {
+                if (btn.getText().equals("Log In")) {
                     connect();
                 } else {
                     disconnect();
@@ -150,7 +150,7 @@ public class MainActivity extends FragmentActivity {
     private void setState(State state) {
         switch (state) {
             case DISCONNECTED:
-                ((Button) findViewById(R.id.btn_connect)).setText("Connect");
+                ((Button) findViewById(R.id.btn_connect)).setText("Log In");
                 findViewById(R.id.btn_connect).setEnabled(true);
 
                 break;
